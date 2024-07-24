@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 
 app = Flask(__name__)
 
@@ -33,6 +33,10 @@ def auth_signup():
     password = request.form['password']
     # Signup logic here
     return redirect(url_for('index'))
+
+@app.route('/robots.txt')
+def robots_txt():
+    return send_from_directory(app.static_folder, 'robots.txt')
 
 if __name__ == '__main__':
     app.run(debug=True)
