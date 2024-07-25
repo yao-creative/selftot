@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebApp</title>
+    <title>Curriculum for {{ course_topic }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -13,10 +13,11 @@
         <a href="/signup">Signup</a>
     </nav>
     <div class="container">
-        <form action="/generate" method="POST">
-            <input type="text" name="course_topic" placeholder="Enter course topic...">
-            <button type="submit">Generate Curriculum</button>
-        </form>
+        <h1>Curriculum for {{ course_topic }}</h1>
+        <div>
+            {{ curriculum|safe }}
+        </div>
+        <a href="/">Back</a>
     </div>
 </body>
 </html>
