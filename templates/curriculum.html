@@ -15,7 +15,10 @@
     <div class="container">
         <h1>Curriculum for {{ course_topic }}</h1>
         <div>
-            {{ curriculum|safe }}
+            {% for item in explanations %}
+                <h2>{{ item['topic'] }}</h2>
+                <p>{{ item['explanation'] }}</p>
+            {% endfor %}
         </div>
         <a href="/">Back</a>
     </div>
