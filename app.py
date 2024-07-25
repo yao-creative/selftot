@@ -1,11 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
-import openai
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
+import google.generativeai as genai
+import requests
 from dotenv import load_dotenv
 import os
+import logging
 
+# Load environment variables from .env file
 load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')
+gemini_api_key = os.getenv('GEMINI_API_KEY')
+genai.configure(api_key=gemini_api_key)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+
+
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # Needed for flashing messages
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
 def index():
@@ -42,18 +54,44 @@ def auth_signup():
 @app.route('/generate', methods=['POST'])
 def generate_curriculum():
     course_topic = request.form['course_topic']
-    curriculum = query_openai(course_topic)
-    return render_template('curriculum.html', course_topic=course_topic, curriculum=curriculum)
+    try:
+        curriculum = query_gemini(course_topic)
+        return render_template('curriculum.html', course_topic=course_topic, curriculum=curriculum)
+    except Exception as e:
+        logging.error(f"Error generating curriculum: {e}")
+        flash('An error occurred while generating the curriculum. Please try again.')
+        return redirect(url_for('index'))
 
-def query_openai(course_topic):
-    # Query OpenAI GPT-3 to generate a curriculum
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=f"Generate a detailed curriculum for a course on {course_topic}. Include topics and brief descriptions.",
-        max_tokens=500
-    )
-    curriculum = response.choices[0].text.strip()
-    return curriculum
+def query_gemini(course_topic):
+    try:
+        headers = {
+            'Authorization': f'Bearer {gemini_api_key}',
+            'Content-Type': 'application/json'
+        }
+        data = {
+            'model': 'gemini-model',
+            'prompt': f"Generate a detailed curriculum for a course on {course_topic}. Include topics and brief descriptions.",
+            'max_tokens': 500
+        }
+        response = requests.post('https://api.gemini.com/v1/completions', headers=headers, json=data)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
+        response_json = response.json()
+        
+        # Debug: Print the entire response JSON
+        print("API Response:", response_json)
+
+        # Check if 'choices' key exists in the response
+        if 'choices' in response_json:
+            curriculum = response_json['choices'][0]['text'].strip()
+            return curriculum
+        else:
+            raise ValueError("The 'choices' key is not in the response JSON")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request to Gemini API failed: {e}")
+        raise
+    except ValueError as ve:
+        logging.error(f"Unexpected response format: {ve}")
+        raise
 
 @app.route('/robots.txt')
 def robots_txt():
