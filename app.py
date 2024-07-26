@@ -39,5 +39,10 @@ def generate():
 
     return render_template('curriculum.html', explanations= explanations, course_topic=input_prompt)
 
+# make sure in login.html /login_user action prints the form data to the console
+@app.route('/login_user', methods=['POST'])
+def login_user():
+    print(f"Form data received: {request.form}")
+    return jsonify(request.form)
 if __name__ == '__main__':
     app.run(debug=True)
